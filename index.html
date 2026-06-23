@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Caixa — Comissão de Pais</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f0f4f8;
+      --surface: #ffffff;
+      --surface2: #f8fafc;
+      --border: #e2e8f0;
+      --primary: #1e40af;
+      --primary-light: #dbeafe;
+      --primary-hover: #1d3faa;
+      --green: #16a34a;
+      --green-light: #dcfce7;
+      --red: #dc2626;
+      --red-light: #fee2e2;
+      --yellow: #ca8a04;
+      --yellow-light: #fef9c3;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --radius: 10px;
+      --shadow: 0 1px 3px rgba(0,0,0,.10), 0 4px 16px rgba(0,0,0,.06);
+    }
+
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    /* ── NAV ── */
+    nav {
+      background: var(--primary);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      height: 58px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.18);
+      position: sticky; top: 0; z-index: 100;
+    }
+    nav .brand { font-size: 1.1rem; font-weight: 700; letter-spacing: .3px; }
+    nav .brand span { font-weight: 400; opacity: .75; font-size: .9rem; }
+    .nav-tabs { display: flex; gap: 4px; }
+    .nav-tab {
+      background: transparent; border: none; color: rgba(255,255,255,.7);
+      padding: 6px 16px; border-radius: 6px; cursor: pointer; font-size: .9rem;
+      transition: background .15s, color .15s;
+    }
+    .nav-tab.active, .nav-tab:hover { background: rgba(255,255,255,.15); color: #fff; }
+    .nav-tab.active { font-weight: 600; }
+
+    /* ── LAYOUT ── */
+    .page { display: none; padding: 28px 20px; max-width: 1100px; margin: 0 auto; }
+    .page.active { display: block; }
+
+    /* ── CARDS ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    .card-title { font-size: 1rem; font-weight: 700; color: var(--text); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+
+    /* ── STAT CARDS ── */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 20px; }
+    .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
+    .stat-label { font-size: .78rem; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted); margin-bottom: 6px; }
+    .stat-value { font-size: 1.65rem; font-weight: 800; }
+    .stat-sub { font-size: .8rem; color: var(--text-muted); margin-top: 4px; }
+    .positive { color: var(--green); }
+    .negative { color: var(--red); }
+    .neutral { color: var(--primary); }
+
+    /* ── TABLE ── */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: .875rem; }
+    thead th { background: var(--surface2); padding: 10px 12px; text-align: left; font-weight: 700; font-size: .75rem; text-transform: uppercase; letter-spacing: .4px; color: var(--text-muted); border-bottom: 2px solid var(--border); white-space: nowrap; }
+    tbody tr { border-bottom: 1px solid var(--border); transition: background .1s; }
+    tbody tr:hover { background: var(--surface2); }
+    tbody td { padding: 10px 12px; }
+    .badge { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .3px; }
+    .badge-in { background: var(--green-light); color: var(--green); }
+    .badge-out { background: var(--red-light); color: var(--red); }
+    .amount-in { color: var(--green); font-weight: 700; }
+    .amount-out { color: var(--red); font-weight: 700; }
+    .saldo-neg { color: var(--red); }
+    .saldo-pos { color: var(--green); }
+    .actions-cell { display: flex; gap: 6px; }
+    .btn-icon { background: none; border: none; cursor: pointer; padding: 4px 6px; border-radius: 4px; font-size: .9rem; transition: background .1s; }
+    .btn-icon:hover { background: var(--border); }
+
+    /* ── FORMS ── */
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
+    label { font-size: .8rem; font-weight: 600; color: var(--text-muted); }
+    input, select, textarea {
+      padding: 9px 12px; border: 1px solid var(--border); border-radius: 7px;
+      font-size: .9rem; color: var(--text); background: var(--surface2);
+      transition: border-color .15s, box-shadow .15s;
+      font-family: inherit;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(30,64,175,.12);
+    }
+    .btn {
+      padding: 9px 20px; border: none; border-radius: 7px; font-size: .9rem;
+      font-weight: 600; cursor: pointer; transition: background .15s, transform .1s;
+      font-family: inherit;
+    }
+    .btn:active { transform: scale(.97); }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-danger { background: var(--red); color: #fff; }
+    .btn-danger:hover { background: #b91c1c; }
+    .btn-secondary { background: var(--border); color: var(--text); }
+    .btn-secondary:hover { background: #cbd5e1; }
+    .btn-success { background: var(--green); color: #fff; }
+    .btn-success:hover { background: #15803d; }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45);
+      z-index: 200; align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--surface); border-radius: var(--radius); padding: 28px;
+      width: min(480px, 94vw); box-shadow: 0 20px 60px rgba(0,0,0,.25);
+      position: relative; animation: popIn .2s ease;
+    }
+    @keyframes popIn { from { transform: scale(.93); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .modal-title { font-size: 1.05rem; font-weight: 700; margin-bottom: 18px; }
+    .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+    .modal-close { position: absolute; top: 14px; right: 14px; background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-muted); }
+
+    /* ── LOGIN ── */
+    #login-overlay {
+      position: fixed; inset: 0; background: rgba(15,23,42,.7);
+      z-index: 300; display: flex; align-items: center; justify-content: center;
+      backdrop-filter: blur(4px);
+    }
+    #login-overlay.hidden { display: none; }
+    .login-box {
+      background: var(--surface); border-radius: 14px; padding: 36px;
+      width: min(380px, 94vw); box-shadow: 0 24px 80px rgba(0,0,0,.3);
+      text-align: center;
+    }
+    .login-icon { font-size: 2.5rem; margin-bottom: 12px; }
+    .login-box h2 { font-size: 1.2rem; margin-bottom: 6px; }
+    .login-box p { font-size: .85rem; color: var(--text-muted); margin-bottom: 22px; }
+    .login-error { color: var(--red); font-size: .82rem; margin-top: 8px; min-height: 18px; }
+
+    /* ── CHART ── */
+    .chart-container { position: relative; height: 280px; }
+
+    /* ── MONTH FILTER ── */
+    .filter-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
+    .filter-row select { min-width: 150px; }
+
+    /* ── TOAST ── */
+    #toast {
+      position: fixed; bottom: 24px; right: 24px; background: #1e293b; color: #fff;
+      padding: 12px 20px; border-radius: 8px; font-size: .87rem; font-weight: 500;
+      z-index: 500; box-shadow: 0 4px 20px rgba(0,0,0,.25);
+      transform: translateY(80px); opacity: 0; transition: all .3s;
+      pointer-events: none;
+    }
+    #toast.show { transform: translateY(0); opacity: 1; }
+    #toast.success::before { content: '✓ '; color: #4ade80; }
+    #toast.error::before { content: '✗ '; color: #f87171; }
+
+    /* ── MISC ── */
+    .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); font-size: .9rem; }
+    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
+    .tag-época { font-size: .75rem; background: var(--primary-light); color: var(--primary); padding: 3px 10px; border-radius: 20px; font-weight: 700; }
+    hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+    .text-right { text-align: right; }
+    .font-mono { font-variant-numeric: tabular-nums; font-family: 'Consolas', monospace; }
+    .running-balance { font-size: .75rem; color: var(--text-muted); }
+
+    @media (max-width: 600px) {
+      nav { padding: 0 12px; }
+      .page { padding: 16px 12px; }
+      .stat-value { font-size: 1.3rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN OVERLAY (admin) -->
+<div id="login-overlay" class="hidden">
+  <div class="login-box">
+    <div class="login-icon">🔐</div>
+    <h2>Área Administrativa</h2>
+    <p>Introduza a palavra-passe para aceder à gestão de movimentos.</p>
+    <div class="form-group" style="text-align:left">
+      <label>Palavra-passe</label>
+      <input type="password" id="pwd-input" placeholder="••••••••" />
+    </div>
+    <div class="login-error" id="login-error"></div>
+    <div style="display:flex;gap:10px;margin-top:16px">
+      <button class="btn btn-secondary" style="flex:1" onclick="closeLogin()">Cancelar</button>
+      <button class="btn btn-primary" style="flex:1" onclick="doLogin()">Entrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- EDIT MODAL -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeEditModal()">✕</button>
+    <div class="modal-title" id="edit-modal-title">Editar Movimento</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Data</label>
+        <input type="date" id="edit-date" />
+      </div>
+      <div class="form-group">
+        <label>Tipo</label>
+        <select id="edit-type">
+          <option value="entrada">Entrada (Receita)</option>
+          <option value="saida">Saída (Despesa)</option>
+        </select>
+      </div>
+      <div class="form-group" style="grid-column:1/-1">
+        <label>Descritivo</label>
+        <input type="text" id="edit-desc" placeholder="Nome do movimento..." />
+      </div>
+      <div class="form-group">
+        <label>Valor (€)</label>
+        <input type="number" id="edit-amount" min="0" step="0.01" placeholder="0,00" />
+      </div>
+      <div class="form-group">
+        <label>Notas (opcional)</label>
+        <input type="text" id="edit-notes" placeholder="..." />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeEditModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveEditModal()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <div class="brand">💰 Caixa CP <span id="nav-epoca"></span></div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('dashboard')">Resumo</button>
+    <button class="nav-tab" onclick="showPage('movimentos')">Movimentos</button>
+    <button class="nav-tab" onclick="showPage('admin')">Admin</button>
+  </div>
+</nav>
+
+<!-- PAGE: DASHBOARD -->
+<div class="page active" id="page-dashboard">
+  <div class="stats-grid" id="stats-grid">
+    <!-- populated by JS -->
+  </div>
+  <div class="card">
+    <div class="card-title">📈 Evolução do Saldo por Mês</div>
+    <div class="chart-container">
+      <canvas id="chart-monthly"></canvas>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">📊 Receitas vs Despesas por Mês</div>
+    <div class="chart-container">
+      <canvas id="chart-bar"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE: MOVIMENTOS -->
+<div class="page" id="page-movimentos">
+  <div class="card">
+    <div class="section-header">
+      <div class="card-title" style="margin:0">📋 Livro de Caixa</div>
+      <div class="filter-row" style="margin:0">
+        <select id="filter-month" onchange="renderMovimentos()">
+          <option value="">Todos os meses</option>
+        </select>
+        <select id="filter-type" onchange="renderMovimentos()">
+          <option value="">Todos os tipos</option>
+          <option value="entrada">Entradas</option>
+          <option value="saida">Saídas</option>
+        </select>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table id="mov-table">
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Descritivo</th>
+            <th class="text-right">Saldo Inicial</th>
+            <th class="text-right">Entradas</th>
+            <th class="text-right">Saídas</th>
+            <th class="text-right">Saldo Final</th>
+          </tr>
+        </thead>
+        <tbody id="mov-body"></tbody>
+        <tfoot id="mov-foot"></tfoot>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE: ADMIN -->
+<div class="page" id="page-admin">
+  <div id="admin-locked" class="card" style="text-align:center;padding:48px">
+    <div style="font-size:3rem;margin-bottom:12px">🔒</div>
+    <div style="font-size:1.05rem;font-weight:700;margin-bottom:8px">Área restrita</div>
+    <div style="color:var(--text-muted);margin-bottom:20px;font-size:.9rem">Necessita de autenticação para gerir movimentos.</div>
+    <button class="btn btn-primary" onclick="showLogin()">Autenticar</button>
+  </div>
+
+  <div id="admin-content" style="display:none">
+    <!-- Settings -->
+    <div class="card">
+      <div class="card-title">⚙️ Configurações da Época</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Nome da Época</label>
+          <input type="text" id="cfg-epoca" placeholder="Ex: 2024/2025" />
+        </div>
+        <div class="form-group">
+          <label>Saldo Inicial de Abertura (€)</label>
+          <input type="number" id="cfg-saldo" step="0.01" placeholder="0,00" />
+        </div>
+        <div class="form-group">
+          <label>Palavra-passe Admin</label>
+          <input type="password" id="cfg-pwd" placeholder="Nova palavra-passe..." />
+        </div>
+        <div class="form-group" style="justify-content:flex-end">
+          <button class="btn btn-primary" onclick="saveConfig()" style="margin-top:auto">Guardar Configurações</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add movement -->
+    <div class="card">
+      <div class="card-title">➕ Adicionar Movimento</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Data</label>
+          <input type="date" id="new-date" />
+        </div>
+        <div class="form-group">
+          <label>Tipo</label>
+          <select id="new-type">
+            <option value="entrada">Entrada (Receita)</option>
+            <option value="saida">Saída (Despesa)</option>
+          </select>
+        </div>
+        <div class="form-group" style="grid-column:1/-1">
+          <label>Descritivo</label>
+          <input type="text" id="new-desc" placeholder="Nome do movimento..." />
+        </div>
+        <div class="form-group">
+          <label>Valor (€)</label>
+          <input type="number" id="new-amount" min="0" step="0.01" placeholder="0,00" />
+        </div>
+        <div class="form-group">
+          <label>Notas (opcional)</label>
+          <input type="text" id="new-notes" placeholder="..." />
+        </div>
+        <div class="form-group" style="justify-content:flex-end">
+          <button class="btn btn-success" onclick="addMovement()" style="margin-top:auto">Adicionar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Movement list for admin -->
+    <div class="card">
+      <div class="section-header">
+        <div class="card-title" style="margin:0">📋 Gerir Movimentos</div>
+        <button class="btn btn-danger" onclick="confirmClearAll()" style="font-size:.8rem;padding:7px 14px">🗑 Limpar Tudo</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Descritivo</th>
+              <th>Tipo</th>
+              <th class="text-right">Valor</th>
+              <th>Notas</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="admin-mov-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Import CSV -->
+    <div class="card">
+      <div class="card-title">📥 Importar / Exportar</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn btn-secondary" onclick="exportCSV()">⬇ Exportar CSV</button>
+        <label class="btn btn-secondary" style="cursor:pointer">
+          ⬆ Importar CSV
+          <input type="file" accept=".csv" onchange="importCSV(event)" style="display:none" />
+        </label>
+        <button class="btn btn-secondary" onclick="exportJSON()">💾 Backup JSON</button>
+        <label class="btn btn-secondary" style="cursor:pointer">
+          📂 Restaurar JSON
+          <input type="file" accept=".json" onchange="importJSON(event)" style="display:none" />
+        </label>
+        <button class="btn btn-secondary" onclick="logout()">🔓 Terminar Sessão</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── STORAGE KEY ──
+const SK = 'cp_caixa_v2';
+
+// ── DEFAULTS ──
+const DEFAULT_PWD = 'admin123';
+
+function getData() {
+  try { return JSON.parse(localStorage.getItem(SK)) || getDefaultData(); }
+  catch { return getDefaultData(); }
+}
+
+function getDefaultData() {
+  return {
+    epoca: '2024/2025',
+    saldoInicial: -1683.56,
+    pwd: DEFAULT_PWD,
+    movimentos: []
+  };
+}
+
+function saveData(d) {
+  localStorage.setItem(SK, JSON.stringify(d));
+}
+
+// ── HELPERS ──
+function fmt(v) {
+  const abs = Math.abs(v).toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return (v < 0 ? '- ' : '') + abs + ' €';
+}
+
+function fmtDate(d) {
+  if (!d) return '';
+  const [y, m, dd] = d.split('-');
+  return `${dd}/${m}/${y}`;
+}
+
+function monthLabel(d) {
+  if (!d) return '';
+  const [y, m] = d.split('-');
+  const months = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  return months[parseInt(m) - 1] + ' ' + y;
+}
+
+function uuid() {
+  return Math.random().toString(36).slice(2) + Date.now().toString(36);
+}
+
+function toast(msg, type = 'success') {
+  const el = document.getElementById('toast');
+  el.className = 'show ' + type;
+  el.textContent = msg;
+  clearTimeout(el._t);
+  el._t = setTimeout(() => { el.className = ''; }, 3000);
+}
+
+// ── COMPUTED MOVEMENTS (with running balance) ──
+function computeMovements(d) {
+  const sorted = [...d.movimentos].sort((a, b) => a.date.localeCompare(b.date));
+  let balance = d.saldoInicial;
+  return sorted.map(m => {
+    const si = balance;
+    if (m.type === 'entrada') balance += m.amount;
+    else balance -= m.amount;
+    return { ...m, saldoInicial: si, saldoFinal: balance };
+  });
+}
+
+// ── PAGE NAVIGATION ──
+let adminAuthed = false;
+
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  event?.target?.classList.add('active');
+
+  if (name === 'dashboard') renderDashboard();
+  if (name === 'movimentos') renderMovimentos();
+  if (name === 'admin') renderAdmin();
+}
+
+// ── LOGIN ──
+function showLogin() {
+  document.getElementById('login-overlay').classList.remove('hidden');
+  document.getElementById('pwd-input').value = '';
+  document.getElementById('login-error').textContent = '';
+  setTimeout(() => document.getElementById('pwd-input').focus(), 100);
+}
+
+function closeLogin() {
+  document.getElementById('login-overlay').classList.add('hidden');
+}
+
+function doLogin() {
+  const pwd = document.getElementById('pwd-input').value;
+  const d = getData();
+  if (pwd === (d.pwd || DEFAULT_PWD)) {
+    adminAuthed = true;
+    closeLogin();
+    renderAdmin();
+    toast('Sessão iniciada com sucesso.');
+  } else {
+    document.getElementById('login-error').textContent = 'Palavra-passe incorreta.';
+  }
+}
+
+document.getElementById('pwd-input').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+function logout() {
+  adminAuthed = false;
+  renderAdmin();
+  toast('Sessão terminada.', 'error');
+}
+
+// ── DASHBOARD ──
+let chartMonthly, chartBar;
+
+function renderDashboard() {
+  const d = getData();
+  const movs = computeMovements(d);
+  const last = movs.at(-1);
+  const saldoAtual = last ? last.saldoFinal : d.saldoInicial;
+  const totalEntradas = movs.reduce((s, m) => m.type === 'entrada' ? s + m.amount : s, 0);
+  const totalSaidas = movs.reduce((s, m) => m.type === 'saida' ? s + m.amount : s, 0);
+
+  document.getElementById('nav-epoca').textContent = d.epoca ? `| ${d.epoca}` : '';
+
+  document.getElementById('stats-grid').innerHTML = `
+    <div class="stat-card">
+      <div class="stat-label">Saldo Atual em Caixa</div>
+      <div class="stat-value ${saldoAtual >= 0 ? 'positive' : 'negative'}">${fmt(saldoAtual)}</div>
+      <div class="stat-sub">Época ${d.epoca || ''}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Total Entradas</div>
+      <div class="stat-value positive">${fmt(totalEntradas)}</div>
+      <div class="stat-sub">${movs.filter(m => m.type === 'entrada').length} movimentos</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Total Saídas</div>
+      <div class="stat-value negative">${fmt(totalSaidas)}</div>
+      <div class="stat-sub">${movs.filter(m => m.type === 'saida').length} movimentos</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Resultado Líquido</div>
+      <div class="stat-value ${(totalEntradas - totalSaidas) >= 0 ? 'positive' : 'negative'}">${fmt(totalEntradas - totalSaidas)}</div>
+      <div class="stat-sub">Entradas − Saídas</div>
+    </div>
+  `;
+
+  // Monthly aggregation
+  const byMonth = {};
+  movs.forEach(m => {
+    const key = m.date.slice(0, 7);
+    if (!byMonth[key]) byMonth[key] = { entradas: 0, saidas: 0, saldoFinal: 0 };
+    if (m.type === 'entrada') byMonth[key].entradas += m.amount;
+    else byMonth[key].saidas += m.amount;
+    byMonth[key].saldoFinal = m.saldoFinal;
+  });
+
+  const monthKeys = Object.keys(byMonth).sort();
+  const labels = monthKeys.map(k => monthLabel(k + '-01'));
+
+  // Running balance per month end
+  const balances = monthKeys.map(k => parseFloat(byMonth[k].saldoFinal.toFixed(2)));
+  const entradas = monthKeys.map(k => parseFloat(byMonth[k].entradas.toFixed(2)));
+  const saidas = monthKeys.map(k => parseFloat(byMonth[k].saidas.toFixed(2)));
+
+  // Chart 1: line chart saldo
+  if (chartMonthly) chartMonthly.destroy();
+  const ctx1 = document.getElementById('chart-monthly').getContext('2d');
+  chartMonthly = new Chart(ctx1, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Saldo Final',
+        data: balances,
+        borderColor: '#1e40af',
+        backgroundColor: 'rgba(30,64,175,.08)',
+        borderWidth: 2.5,
+        pointRadius: 5,
+        pointBackgroundColor: balances.map(v => v >= 0 ? '#16a34a' : '#dc2626'),
+        fill: true,
+        tension: .3
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: {
+        callbacks: { label: ctx => ' ' + fmt(ctx.raw) }
+      }},
+      scales: {
+        y: {
+          ticks: { callback: v => fmt(v) },
+          grid: { color: '#e2e8f0' }
+        },
+        x: { grid: { color: '#e2e8f0' } }
+      }
+    }
+  });
+
+  // Chart 2: bar chart entradas vs saidas
+  if (chartBar) chartBar.destroy();
+  const ctx2 = document.getElementById('chart-bar').getContext('2d');
+  chartBar = new Chart(ctx2, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Entradas', data: entradas, backgroundColor: 'rgba(22,163,74,.75)', borderRadius: 5 },
+        { label: 'Saídas', data: saidas, backgroundColor: 'rgba(220,38,38,.75)', borderRadius: 5 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${fmt(ctx.raw)}` } } },
+      scales: {
+        y: { ticks: { callback: v => fmt(v) }, grid: { color: '#e2e8f0' } },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+}
+
+// ── MOVIMENTOS PAGE ──
+function buildMonthOptions() {
+  const d = getData();
+  const movs = computeMovements(d);
+  const months = [...new Set(movs.map(m => m.date.slice(0, 7)))].sort();
+  const sel = document.getElementById('filter-month');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">Todos os meses</option>';
+  months.forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m;
+    opt.textContent = monthLabel(m + '-01');
+    if (m === cur) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+function renderMovimentos() {
+  buildMonthOptions();
+  const d = getData();
+  const movs = computeMovements(d);
+  const mFilter = document.getElementById('filter-month').value;
+  const tFilter = document.getElementById('filter-type').value;
+
+  let filtered = movs;
+  if (mFilter) filtered = filtered.filter(m => m.date.startsWith(mFilter));
+  if (tFilter) filtered = filtered.filter(m => m.type === tFilter);
+
+  const tbody = document.getElementById('mov-body');
+  const tfoot = document.getElementById('mov-foot');
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" class="empty-state">Nenhum movimento encontrado.</td></tr>`;
+    tfoot.innerHTML = '';
+    return;
+  }
+
+  // Opening row if filtered by month
+  let openingRow = '';
+  if (mFilter) {
+    const monthMovs = movs.filter(m => m.date.startsWith(mFilter));
+    if (monthMovs.length > 0) {
+      const si = monthMovs[0].saldoInicial;
+      openingRow = `<tr style="background:var(--primary-light)">
+        <td colspan="2" style="font-weight:700;color:var(--primary);font-size:.8rem;text-transform:uppercase;letter-spacing:.3px">Saldo de abertura do mês</td>
+        <td class="text-right font-mono" style="font-weight:700;color:${si>=0?'var(--green)':'var(--red)'}">${fmt(si)}</td>
+        <td></td><td></td><td></td>
+      </tr>`;
+    }
+  } else {
+    const si = d.saldoInicial;
+    openingRow = `<tr style="background:var(--yellow-light)">
+      <td style="font-weight:700;color:var(--yellow);font-size:.8rem">Abertura</td>
+      <td style="font-weight:700;color:var(--yellow)">SALDO TRANSITADO DA ÉPOCA ANTERIOR</td>
+      <td class="text-right font-mono" style="font-weight:700;color:${si>=0?'var(--green)':'var(--red)'}">${fmt(si)}</td>
+      <td></td><td></td>
+      <td class="text-right font-mono" style="font-weight:700;color:${si>=0?'var(--green)':'var(--red)'}">${fmt(si)}</td>
+    </tr>`;
+  }
+
+  tbody.innerHTML = openingRow + filtered.map(m => `
+    <tr>
+      <td style="white-space:nowrap;color:var(--text-muted);font-size:.82rem">${fmtDate(m.date)}</td>
+      <td style="font-weight:600">${escHtml(m.desc)}${m.notes ? `<br><span style="font-weight:400;font-size:.76rem;color:var(--text-muted)">${escHtml(m.notes)}</span>` : ''}</td>
+      <td class="text-right font-mono ${m.saldoInicial >= 0 ? 'saldo-pos' : 'saldo-neg'}">${fmt(m.saldoInicial)}</td>
+      <td class="text-right font-mono amount-in">${m.type === 'entrada' ? fmt(m.amount) : ''}</td>
+      <td class="text-right font-mono amount-out">${m.type === 'saida' ? fmt(m.amount) : ''}</td>
+      <td class="text-right font-mono ${m.saldoFinal >= 0 ? 'saldo-pos' : 'saldo-neg'}" style="font-weight:700">${fmt(m.saldoFinal)}</td>
+    </tr>
+  `).join('');
+
+  // Footer totals
+  const totalEntradas = filtered.filter(m => m.type === 'entrada').reduce((s, m) => s + m.amount, 0);
+  const totalSaidas = filtered.filter(m => m.type === 'saida').reduce((s, m) => s + m.amount, 0);
+  const saldoFinal = filtered.at(-1)?.saldoFinal ?? d.saldoInicial;
+
+  tfoot.innerHTML = `<tr style="background:var(--surface2);border-top:2px solid var(--border)">
+    <td colspan="2" style="font-weight:700;font-size:.8rem;text-transform:uppercase;letter-spacing:.3px">TOTAIS</td>
+    <td></td>
+    <td class="text-right font-mono amount-in" style="font-weight:800">${fmt(totalEntradas)}</td>
+    <td class="text-right font-mono amount-out" style="font-weight:800">${fmt(totalSaidas)}</td>
+    <td class="text-right font-mono ${saldoFinal >= 0 ? 'saldo-pos' : 'saldo-neg'}" style="font-weight:800">${fmt(saldoFinal)}</td>
+  </tr>`;
+}
+
+function escHtml(s) {
+  return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── ADMIN ──
+function renderAdmin() {
+  if (!adminAuthed) {
+    document.getElementById('admin-locked').style.display = '';
+    document.getElementById('admin-content').style.display = 'none';
+    return;
+  }
+  document.getElementById('admin-locked').style.display = 'none';
+  document.getElementById('admin-content').style.display = '';
+
+  const d = getData();
+  document.getElementById('cfg-epoca').value = d.epoca || '';
+  document.getElementById('cfg-saldo').value = d.saldoInicial ?? '';
+  document.getElementById('cfg-pwd').value = '';
+
+  // today default
+  const today = new Date().toISOString().slice(0, 10);
+  if (!document.getElementById('new-date').value) document.getElementById('new-date').value = today;
+
+  renderAdminTable();
+}
+
+function renderAdminTable() {
+  const d = getData();
+  const sorted = [...d.movimentos].sort((a, b) => b.date.localeCompare(a.date));
+  const tbody = document.getElementById('admin-mov-body');
+  if (sorted.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" class="empty-state">Sem movimentos registados.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = sorted.map(m => `
+    <tr>
+      <td style="white-space:nowrap;font-size:.85rem">${fmtDate(m.date)}</td>
+      <td style="font-weight:600">${escHtml(m.desc)}</td>
+      <td><span class="badge ${m.type === 'entrada' ? 'badge-in' : 'badge-out'}">${m.type === 'entrada' ? 'Entrada' : 'Saída'}</span></td>
+      <td class="text-right font-mono ${m.type === 'entrada' ? 'amount-in' : 'amount-out'}">${fmt(m.amount)}</td>
+      <td style="font-size:.82rem;color:var(--text-muted)">${escHtml(m.notes || '')}</td>
+      <td>
+        <div class="actions-cell">
+          <button class="btn-icon" title="Editar" onclick="editMovement('${m.id}')">✏️</button>
+          <button class="btn-icon" title="Eliminar" onclick="deleteMovement('${m.id}')">🗑️</button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function saveConfig() {
+  const d = getData();
+  const ep = document.getElementById('cfg-epoca').value.trim();
+  const sl = parseFloat(document.getElementById('cfg-saldo').value);
+  const pw = document.getElementById('cfg-pwd').value;
+
+  if (ep) d.epoca = ep;
+  if (!isNaN(sl)) d.saldoInicial = sl;
+  if (pw && pw.length >= 4) d.pwd = pw;
+  else if (pw && pw.length < 4) { toast('A palavra-passe deve ter pelo menos 4 caracteres.', 'error'); return; }
+
+  saveData(d);
+  toast('Configurações guardadas.');
+  document.getElementById('nav-epoca').textContent = d.epoca ? `| ${d.epoca}` : '';
+}
+
+function addMovement() {
+  const date = document.getElementById('new-date').value;
+  const type = document.getElementById('new-type').value;
+  const desc = document.getElementById('new-desc').value.trim();
+  const amount = parseFloat(document.getElementById('new-amount').value);
+  const notes = document.getElementById('new-notes').value.trim();
+
+  if (!date) { toast('Selecione uma data.', 'error'); return; }
+  if (!desc) { toast('Preencha o descritivo.', 'error'); return; }
+  if (isNaN(amount) || amount <= 0) { toast('Valor inválido.', 'error'); return; }
+
+  const d = getData();
+  d.movimentos.push({ id: uuid(), date, type, desc, amount, notes });
+  saveData(d);
+  toast('Movimento adicionado.');
+
+  document.getElementById('new-desc').value = '';
+  document.getElementById('new-amount').value = '';
+  document.getElementById('new-notes').value = '';
+
+  renderAdminTable();
+}
+
+function deleteMovement(id) {
+  if (!confirm('Confirma a eliminação deste movimento?')) return;
+  const d = getData();
+  d.movimentos = d.movimentos.filter(m => m.id !== id);
+  saveData(d);
+  toast('Movimento eliminado.', 'error');
+  renderAdminTable();
+}
+
+function confirmClearAll() {
+  if (!confirm('Tem a certeza que quer eliminar TODOS os movimentos? Esta ação não pode ser desfeita.')) return;
+  if (!confirm('CONFIRMAÇÃO FINAL: Eliminar todos os movimentos?')) return;
+  const d = getData();
+  d.movimentos = [];
+  saveData(d);
+  toast('Todos os movimentos eliminados.', 'error');
+  renderAdminTable();
+}
+
+// ── EDIT MODAL ──
+let editingId = null;
+
+function editMovement(id) {
+  const d = getData();
+  const m = d.movimentos.find(x => x.id === id);
+  if (!m) return;
+  editingId = id;
+  document.getElementById('edit-date').value = m.date;
+  document.getElementById('edit-type').value = m.type;
+  document.getElementById('edit-desc').value = m.desc;
+  document.getElementById('edit-amount').value = m.amount;
+  document.getElementById('edit-notes').value = m.notes || '';
+  document.getElementById('edit-modal').classList.add('open');
+}
+
+function closeEditModal() {
+  document.getElementById('edit-modal').classList.remove('open');
+  editingId = null;
+}
+
+function saveEditModal() {
+  const date = document.getElementById('edit-date').value;
+  const type = document.getElementById('edit-type').value;
+  const desc = document.getElementById('edit-desc').value.trim();
+  const amount = parseFloat(document.getElementById('edit-amount').value);
+  const notes = document.getElementById('edit-notes').value.trim();
+
+  if (!date || !desc || isNaN(amount) || amount <= 0) { toast('Preencha todos os campos corretamente.', 'error'); return; }
+
+  const d = getData();
+  const idx = d.movimentos.findIndex(m => m.id === editingId);
+  if (idx === -1) return;
+  d.movimentos[idx] = { ...d.movimentos[idx], date, type, desc, amount, notes };
+  saveData(d);
+  closeEditModal();
+  toast('Movimento atualizado.');
+  renderAdminTable();
+}
+
+// ── EXPORT / IMPORT ──
+function exportCSV() {
+  const d = getData();
+  const movs = computeMovements(d);
+  const rows = [['Data','Descritivo','Tipo','Saldo Inicial','Entradas','Saídas','Saldo Final','Notas']];
+  movs.forEach(m => rows.push([
+    fmtDate(m.date), m.desc, m.type === 'entrada' ? 'Entrada' : 'Saída',
+    m.saldoInicial.toFixed(2),
+    m.type === 'entrada' ? m.amount.toFixed(2) : '',
+    m.type === 'saida' ? m.amount.toFixed(2) : '',
+    m.saldoFinal.toFixed(2), m.notes || ''
+  ]));
+  const csv = rows.map(r => r.map(c => `"${c}"`).join(';')).join('\n');
+  download('caixa_cp.csv', csv, 'text/csv;charset=utf-8;');
+  toast('CSV exportado.');
+}
+
+function exportJSON() {
+  const d = getData();
+  download('caixa_cp_backup.json', JSON.stringify(d, null, 2), 'application/json');
+  toast('Backup JSON exportado.');
+}
+
+function importCSV(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const lines = ev.target.result.split('\n').slice(1).filter(l => l.trim());
+    const d = getData();
+    let count = 0;
+    lines.forEach(line => {
+      const cols = line.split(';').map(c => c.replace(/^"|"$/g, '').trim());
+      if (cols.length < 4) return;
+      const [dateStr, desc, tipo, , entradas, saidas, , notes] = cols;
+      const parts = dateStr.split('/');
+      if (parts.length !== 3) return;
+      const date = `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
+      const type = tipo === 'Entrada' ? 'entrada' : 'saida';
+      const amount = parseFloat((type === 'entrada' ? entradas : saidas).replace(',','.'));
+      if (isNaN(amount) || amount <= 0) return;
+      d.movimentos.push({ id: uuid(), date, type, desc, amount, notes: notes || '' });
+      count++;
+    });
+    saveData(d);
+    renderAdminTable();
+    toast(`${count} movimentos importados.`);
+    e.target.value = '';
+  };
+  reader.readAsText(file, 'utf-8');
+}
+
+function importJSON(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (!confirm('Isto vai SUBSTITUIR todos os dados atuais. Confirma?')) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (!data.movimentos) { toast('Ficheiro JSON inválido.', 'error'); return; }
+      saveData(data);
+      renderAdmin();
+      toast('Dados restaurados com sucesso.');
+    } catch { toast('Erro ao processar o ficheiro JSON.', 'error'); }
+    e.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+function download(filename, content, mime) {
+  const blob = new Blob(['﻿' + content], { type: mime });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// ── KEYBOARD SHORTCUTS ──
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeEditModal(); closeLogin(); }
+});
+
+// ── INIT ──
+(function init() {
+  const d = getData();
+  document.getElementById('nav-epoca').textContent = d.epoca ? `| ${d.epoca}` : '';
+
+  // If no data yet, pre-load the demo from the image
+  if (d.movimentos.length === 0 && d.saldoInicial === -1683.56) {
+    // Pre-loaded demo data matching the spreadsheet in the image
+    const demo = [
+      { date:'2024-09-14', type:'entrada', desc:'NOITE BRANCA', amount:912.24, notes:'' },
+      { date:'2024-09-21', type:'entrada', desc:'BAR TWORK', amount:189.00, notes:'' },
+      { date:'2024-10-04', type:'saida',   desc:'PIPOCAS + BATATAS', amount:117.87, notes:'' },
+      { date:'2024-10-25', type:'entrada', desc:'BAR SUB18', amount:289.00, notes:'' },
+      { date:'2024-11-02', type:'entrada', desc:'BAR SUB16A', amount:175.00, notes:'' },
+      { date:'2024-11-02', type:'entrada', desc:'LOJA VINTAGE', amount:225.00, notes:'' },
+      { date:'2024-11-16', type:'entrada', desc:'BAR SUB16B', amount:345.00, notes:'' },
+      { date:'2024-11-16', type:'entrada', desc:'LOJA VINTAGE', amount:125.00, notes:'' },
+      { date:'2024-12-14', type:'entrada', desc:'BAR SUB14BF', amount:265.00, notes:'' },
+      { date:'2024-12-19', type:'saida',   desc:'CABAZES NATAL', amount:255.00, notes:'' },
+      { date:'2024-12-29', type:'entrada', desc:'BAR SUB16F', amount:395.50, notes:'' },
+      { date:'2024-12-29', type:'saida',   desc:'PAI NATAL CHOCOLATE 60UN', amount:75.94, notes:'' },
+      { date:'2024-12-29', type:'entrada', desc:'RIFAS', amount:1462.00, notes:'' },
+      { date:'2025-01-16', type:'saida',   desc:'Inscrição Equipas 9 equipas para BYF 2025 (75€)', amount:675.00, notes:'' },
+      { date:'2025-01-22', type:'saida',   desc:'COMPRAS BAR', amount:153.20, notes:'' },
+      { date:'2025-01-25', type:'entrada', desc:'BAR SUB14AM', amount:642.77, notes:'' },
+      { date:'2025-01-20', type:'saida',   desc:'COMPRAS BAR', amount:30.00, notes:'' },
+      { date:'2025-01-31', type:'entrada', desc:'BAR SUB14BM', amount:225.00, notes:'' },
+      { date:'2025-02-02', type:'entrada', desc:'BAR SUB12', amount:193.80, notes:'' },
+      { date:'2025-03-06', type:'saida',   desc:'PANELA DE BIFANAS CASA VELHA (BAR SUB10)', amount:80.00, notes:'' },
+    ];
+    demo.forEach(m => d.movimentos.push({ ...m, id: uuid() }));
+    saveData(d);
+  }
+
+  renderDashboard();
+})();
+</script>
+</body>
+</html>
