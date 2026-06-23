@@ -22,28 +22,70 @@
 
 body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
 
-/* ── NAV ── */
-nav {
-  background: var(--primary);
-  color: #fff;
+/* ── HEADER ── */
+.site-header {
+  background: #0d1b2e;
+  position: sticky; top: 0; z-index: 100;
+  box-shadow: 0 2px 12px rgba(0,0,0,.4);
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+.header-inner {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   padding: 0 24px;
-  height: 58px;
-  box-shadow: 0 2px 8px rgba(0,0,0,.18);
-  position: sticky; top: 0; z-index: 100;
+  height: 76px;
+  max-width: 1200px;
+  margin: 0 auto;
+  gap: 20px;
 }
-nav .brand { font-size: 1.1rem; font-weight: 700; letter-spacing: .3px; }
-nav .brand span { font-weight: 400; opacity: .75; font-size: .9rem; }
-.nav-tabs { display: flex; gap: 4px; }
+.header-logo {
+  height: 54px;
+  width: auto;
+  flex-shrink: 0;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,.4));
+}
+.header-center {
+  flex: 1;
+  text-align: center;
+}
+.header-title {
+  color: #ffffff;
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  line-height: 1.1;
+}
+.header-subtitle {
+  color: #e63030;
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  margin-top: 5px;
+}
+.header-line {
+  width: 36px;
+  height: 2px;
+  background: #e63030;
+  margin: 5px auto 0;
+  border-radius: 2px;
+}
+.header-nav { display: flex; gap: 4px; flex-shrink: 0; }
 .nav-tab {
-  background: transparent; border: none; color: rgba(255,255,255,.7);
-  padding: 6px 16px; border-radius: 6px; cursor: pointer; font-size: .9rem;
+  background: transparent; border: none; color: rgba(255,255,255,.6);
+  padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: .85rem;
   transition: background .15s, color .15s; font-family: inherit;
 }
-.nav-tab.active, .nav-tab:hover { background: rgba(255,255,255,.15); color: #fff; }
-.nav-tab.active { font-weight: 600; }
+.nav-tab.active, .nav-tab:hover { background: rgba(255,255,255,.12); color: #fff; }
+.nav-tab.active { font-weight: 600; color: #fff; }
+
+@media (max-width: 700px) {
+  .header-title { font-size: .9rem; letter-spacing: 1px; }
+  .header-subtitle { font-size: .6rem; }
+  .header-logo { height: 40px; }
+  .header-inner { padding: 0 12px; height: 64px; }
+}
 
 /* ── LAYOUT ── */
 main { padding: 28px 20px; max-width: 1100px; margin: 0 auto; }

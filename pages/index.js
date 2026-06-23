@@ -400,26 +400,31 @@ export default function Home() {
       )}
 
       {/* Nav */}
-      <nav>
-        <div className="brand">
-          💰 Caixa CP <span>{config.epoca ? `| ${config.epoca}` : ''}</span>
+      <header className="site-header">
+        <div className="header-inner">
+          <img src="/logo.png" alt="UDO" className="header-logo" onError={e => { e.target.style.display = 'none' }} />
+          <div className="header-center">
+            <div className="header-title">UNIÃO DESPORTIVA OLIVEIRENSE</div>
+            <div className="header-subtitle">CAIXA — COMISSÃO DE PAIS</div>
+            <div className="header-line" />
+          </div>
+          <nav className="header-nav">
+            {[
+              { id: 'dashboard', label: 'Resumo' },
+              { id: 'movimentos', label: 'Movimentos' },
+              { id: 'admin', label: 'Admin' },
+            ].map(t => (
+              <button
+                key={t.id}
+                className={`nav-tab ${tab === t.id ? 'active' : ''}`}
+                onClick={() => setTab(t.id)}
+              >
+                {t.label}
+              </button>
+            ))}
+          </nav>
         </div>
-        <div className="nav-tabs">
-          {[
-            { id: 'dashboard', label: 'Resumo' },
-            { id: 'movimentos', label: 'Movimentos' },
-            { id: 'admin', label: 'Admin' },
-          ].map(t => (
-            <button
-              key={t.id}
-              className={`nav-tab ${tab === t.id ? 'active' : ''}`}
-              onClick={() => setTab(t.id)}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
-      </nav>
+      </header>
 
       <main>
         {/* ── DASHBOARD ── */}
