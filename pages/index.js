@@ -284,7 +284,7 @@ export default function Home() {
 
   const totalEntradas = movs.reduce((s, m) => m.type === 'entrada' ? s + m.amount : s, 0)
   const totalSaidas = movs.reduce((s, m) => m.type === 'saida' ? s + m.amount : s, 0)
-  const saldoAtual = movs.at(-1)?.saldoFinal ?? parseFloat(config.saldo_inicial) ?? 0
+  const saldoAtual = movs.at(-1)?.saldoFinal ?? (parseFloat(config.saldo_inicial) || 0)
 
   const byMonth = {}
   movs.forEach(m => {
@@ -322,14 +322,14 @@ export default function Home() {
     ],
   }
 
-  const chartOpts = (fmt) => ({
+  const lineOpts = {
     responsive: true, maintainAspectRatio: false,
     plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ${fmt(ctx.raw)}` } } },
     scales: {
       y: { ticks: { callback: v => fmt(v) }, grid: { color: '#e2e8f0' } },
       x: { grid: { color: '#e2e8f0' } },
     },
-  })
+  }
 
   const barOpts = {
     responsive: true, maintainAspectRatio: false,
@@ -339,6 +339,9 @@ export default function Home() {
       x: { grid: { display: false } },
     },
   }
+
+  const closeLogin = () => { setShowLogin(false); setLoginError('') }
+  const sortedTransactions = [...transactions].sort((a, b) => b.date.localeCompare(a.date))
 
   if (loading) return <div className="loading">A carregar...</div>
 
@@ -359,11 +362,9 @@ export default function Home() {
       {showLogin && (
         <div className="modal-overlay">
           <div className="modal">
-            <button className="modal-close" onClick={() => { setShowLogin(false); setLoginError('') }}>✕</button>
+            <button className="modal-close" onClick={closeLogin}>✕</button>
             <div className="modal-title">🔐 Área Administrativa</div>
-            <p style={{ fontSize: '.85rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
-              Introduza a palavra-passe para gerir movimentos.
-            </p>
+            <p className="login-hint">Introduza a palavra-passe para gerir movimentos.</p>
             <div className="form-group">
               <label>Palavra-passe</label>
               <input
@@ -375,13 +376,9 @@ export default function Home() {
                 autoFocus
               />
             </div>
-            {loginError && (
-              <div style={{ color: 'var(--red)', fontSize: '.82rem', marginTop: '6px' }}>{loginError}</div>
-            )}
+            {loginError && <div className="form-error">{loginError}</div>}
             <div className="modal-footer">
-              <button className="btn btn-secondary" onClick={() => { setShowLogin(false); setLoginError('') }}>
-                Cancelar
-              </button>
+              <button className="btn btn-secondary" onClick={closeLogin}>Cancelar</button>
               <button className="btn btn-primary" onClick={doLogin} disabled={loginLoading}>
                 {loginLoading ? 'A verificar...' : 'Entrar'}
               </button>
@@ -442,7 +439,7 @@ export default function Home() {
                 <div className="card">
                   <div className="card-title">📈 Evolução do Saldo por Mês</div>
                   <div className="chart-container">
-                    <Line data={lineData} options={chartOpts(fmt)} />
+                    <Line data={lineData} options={lineOpts} />
                   </div>
                 </div>
                 <div className="card">
@@ -466,7 +463,7 @@ export default function Home() {
         {tab === 'movimentos' && (
           <div className="card">
             <div className="section-header">
-              <div className="card-title" style={{ margin: 0 }}>📋 Livro de Caixa</div>
+              <div className="card-title">📋 Livro de Caixa</div>
               <div className="filter-row">
                 <select value={filterMonth} onChange={e => setFilterMonth(e.target.value)}>
                   <option value="">Todos os meses</option>
@@ -496,25 +493,23 @@ export default function Home() {
                   {/* Opening balance row */}
                   {filterMonth ? (
                     filteredMovs.length > 0 && (
-                      <tr style={{ background: 'var(--primary-light)' }}>
-                        <td colSpan="2" style={{ fontWeight: 700, color: 'var(--primary)', fontSize: '.8rem', textTransform: 'uppercase', letterSpacing: '.3px' }}>
-                          Saldo de abertura do mês
-                        </td>
-                        <td className={`text-right font-mono ${filteredMovs[0].saldoInicial >= 0 ? 'saldo-pos' : 'saldo-neg'}`} style={{ fontWeight: 700 }}>
+                      <tr className="row-opening">
+                        <td colSpan="2" className="td-label-opening">Saldo de abertura do mês</td>
+                        <td className={`text-right font-mono td-bold ${filteredMovs[0].saldoInicial >= 0 ? 'saldo-pos' : 'saldo-neg'}`}>
                           {fmt(filteredMovs[0].saldoInicial)}
                         </td>
                         <td /><td /><td />
                       </tr>
                     )
                   ) : (
-                    <tr style={{ background: 'var(--yellow-light)' }}>
-                      <td style={{ fontWeight: 700, color: 'var(--yellow)', fontSize: '.8rem' }}>Abertura</td>
-                      <td style={{ fontWeight: 700, color: 'var(--yellow)' }}>SALDO TRANSITADO DA ÉPOCA ANTERIOR</td>
-                      <td className={`text-right font-mono ${saldoIni >= 0 ? 'saldo-pos' : 'saldo-neg'}`} style={{ fontWeight: 700 }}>
+                    <tr className="row-transitado">
+                      <td className="td-label-transitado-sm">Abertura</td>
+                      <td className="td-label-transitado">SALDO TRANSITADO DA ÉPOCA ANTERIOR</td>
+                      <td className={`text-right font-mono td-bold ${saldoIni >= 0 ? 'saldo-pos' : 'saldo-neg'}`}>
                         {fmt(saldoIni)}
                       </td>
                       <td /><td />
-                      <td className={`text-right font-mono ${saldoIni >= 0 ? 'saldo-pos' : 'saldo-neg'}`} style={{ fontWeight: 700 }}>
+                      <td className={`text-right font-mono td-bold ${saldoIni >= 0 ? 'saldo-pos' : 'saldo-neg'}`}>
                         {fmt(saldoIni)}
                       </td>
                     </tr>
@@ -524,30 +519,30 @@ export default function Home() {
                     <tr><td colSpan="6" className="empty-state">Nenhum movimento encontrado.</td></tr>
                   ) : filteredMovs.map(m => (
                     <tr key={m.id}>
-                      <td style={{ whiteSpace: 'nowrap', color: 'var(--text-muted)', fontSize: '.82rem' }}>{fmtDate(m.date)}</td>
-                      <td style={{ fontWeight: 600 }}>
+                      <td className="td-date">{fmtDate(m.date)}</td>
+                      <td className="td-desc">
                         {m.description}
-                        {m.notes && <><br /><span style={{ fontWeight: 400, fontSize: '.76rem', color: 'var(--text-muted)' }}>{m.notes}</span></>}
+                        {m.notes && <><br /><span className="td-notes">{m.notes}</span></>}
                       </td>
                       <td className={`text-right font-mono ${m.saldoInicial >= 0 ? 'saldo-pos' : 'saldo-neg'}`}>{fmt(m.saldoInicial)}</td>
                       <td className="text-right font-mono amount-in">{m.type === 'entrada' ? fmt(m.amount) : ''}</td>
                       <td className="text-right font-mono amount-out">{m.type === 'saida' ? fmt(m.amount) : ''}</td>
-                      <td className={`text-right font-mono ${m.saldoFinal >= 0 ? 'saldo-pos' : 'saldo-neg'}`} style={{ fontWeight: 700 }}>{fmt(m.saldoFinal)}</td>
+                      <td className={`text-right font-mono td-bold ${m.saldoFinal >= 0 ? 'saldo-pos' : 'saldo-neg'}`}>{fmt(m.saldoFinal)}</td>
                     </tr>
                   ))}
                 </tbody>
                 {filteredMovs.length > 0 && (
                   <tfoot>
-                    <tr style={{ background: 'var(--surface2)', borderTop: '2px solid var(--border)' }}>
-                      <td colSpan="2" style={{ fontWeight: 700, fontSize: '.8rem', textTransform: 'uppercase', letterSpacing: '.3px' }}>TOTAIS</td>
+                    <tr className="tfoot-totals">
+                      <td colSpan="2" className="td-label-opening">TOTAIS</td>
                       <td />
-                      <td className="text-right font-mono amount-in" style={{ fontWeight: 800 }}>
+                      <td className="text-right font-mono amount-in td-totals">
                         {fmt(filteredMovs.reduce((s, m) => m.type === 'entrada' ? s + m.amount : s, 0))}
                       </td>
-                      <td className="text-right font-mono amount-out" style={{ fontWeight: 800 }}>
+                      <td className="text-right font-mono amount-out td-totals">
                         {fmt(filteredMovs.reduce((s, m) => m.type === 'saida' ? s + m.amount : s, 0))}
                       </td>
-                      <td className={`text-right font-mono ${(filteredMovs.at(-1)?.saldoFinal ?? 0) >= 0 ? 'saldo-pos' : 'saldo-neg'}`} style={{ fontWeight: 800 }}>
+                      <td className={`text-right font-mono td-totals ${(filteredMovs.at(-1)?.saldoFinal ?? 0) >= 0 ? 'saldo-pos' : 'saldo-neg'}`}>
                         {fmt(filteredMovs.at(-1)?.saldoFinal ?? 0)}
                       </td>
                     </tr>
@@ -561,12 +556,10 @@ export default function Home() {
         {/* ── ADMIN ── */}
         {tab === 'admin' && (
           !adminAuthed ? (
-            <div className="card" style={{ textAlign: 'center', padding: '48px' }}>
-              <div style={{ fontSize: '3rem', marginBottom: '12px' }}>🔒</div>
-              <div style={{ fontSize: '1.05rem', fontWeight: 700, marginBottom: '8px' }}>Área restrita</div>
-              <div style={{ color: 'var(--text-muted)', marginBottom: '20px', fontSize: '.9rem' }}>
-                Necessita de autenticação para gerir movimentos.
-              </div>
+            <div className="card card-locked">
+              <div className="lock-icon">🔒</div>
+              <div className="lock-title">Área restrita</div>
+              <div className="text-hint">Necessita de autenticação para gerir movimentos.</div>
               <button className="btn btn-primary" onClick={() => setShowLogin(true)}>Autenticar</button>
             </div>
           ) : (
@@ -602,8 +595,8 @@ export default function Home() {
                       placeholder="Deixar vazio para manter"
                     />
                   </div>
-                  <div className="form-group" style={{ justifyContent: 'flex-end' }}>
-                    <button className="btn btn-primary" onClick={saveConfig} style={{ marginTop: 'auto' }}>
+                  <div className="form-group form-group-end">
+                    <button className="btn btn-primary btn-end" onClick={saveConfig}>
                       Guardar Configurações
                     </button>
                   </div>
@@ -629,7 +622,7 @@ export default function Home() {
                       <option value="saida">Saída (Despesa)</option>
                     </select>
                   </div>
-                  <div className="form-group" style={{ gridColumn: '1/-1' }}>
+                  <div className="form-group full-col">
                     <label>Descritivo</label>
                     <input
                       type="text"
@@ -657,8 +650,8 @@ export default function Home() {
                       placeholder="..."
                     />
                   </div>
-                  <div className="form-group" style={{ justifyContent: 'flex-end' }}>
-                    <button className="btn btn-success" onClick={addTransaction} style={{ marginTop: 'auto' }}>
+                  <div className="form-group form-group-end">
+                    <button className="btn btn-success btn-end" onClick={addTransaction}>
                       Adicionar
                     </button>
                   </div>
@@ -668,12 +661,12 @@ export default function Home() {
               {/* Manage transactions */}
               <div className="card">
                 <div className="section-header">
-                  <div className="card-title" style={{ margin: 0 }}>📋 Gerir Movimentos</div>
-                  <div style={{ display: 'flex', gap: '10px' }}>
-                    <button className="btn btn-secondary" style={{ fontSize: '.8rem', padding: '7px 14px' }} onClick={() => exportCSV(movs, config)}>
+                  <div className="card-title">📋 Gerir Movimentos</div>
+                  <div className="btn-group">
+                    <button className="btn btn-secondary btn-sm" onClick={() => exportCSV(movs, config)}>
                       ⬇ Exportar CSV
                     </button>
-                    <button className="btn btn-danger" style={{ fontSize: '.8rem', padding: '7px 14px' }} onClick={deleteAll}>
+                    <button className="btn btn-danger btn-sm" onClick={deleteAll}>
                       🗑 Limpar Tudo
                     </button>
                   </div>
@@ -693,13 +686,13 @@ export default function Home() {
                     <tbody>
                       {transactions.length === 0 ? (
                         <tr><td colSpan="6" className="empty-state">Sem movimentos registados.</td></tr>
-                      ) : [...transactions].sort((a, b) => b.date.localeCompare(a.date)).map(t => (
+                      ) : sortedTransactions.map(t => (
                         <tr key={t.id}>
-                          <td style={{ whiteSpace: 'nowrap', fontSize: '.85rem' }}>{fmtDate(t.date)}</td>
-                          <td style={{ fontWeight: 600 }}>{t.description}</td>
+                          <td className="td-date">{fmtDate(t.date)}</td>
+                          <td className="td-desc">{t.description}</td>
                           <td><span className={`badge ${t.type === 'entrada' ? 'badge-in' : 'badge-out'}`}>{t.type === 'entrada' ? 'Entrada' : 'Saída'}</span></td>
                           <td className={`text-right font-mono ${t.type === 'entrada' ? 'amount-in' : 'amount-out'}`}>{fmt(parseFloat(t.amount))}</td>
-                          <td style={{ fontSize: '.82rem', color: 'var(--text-muted)' }}>{t.notes || ''}</td>
+                          <td className="td-notes">{t.notes || ''}</td>
                           <td>
                             <div className="actions-cell">
                               <button className="btn-icon" title="Editar" onClick={() => setEditModal(t)}>✏️</button>

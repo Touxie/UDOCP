@@ -188,6 +188,7 @@ input:focus, select:focus, textarea:focus {
 /* ── MISC ── */
 .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); font-size: .9rem; }
 .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
+.section-header .card-title { margin: 0; }
 .text-right { text-align: right; }
 .font-mono { font-variant-numeric: tabular-nums; font-family: 'Consolas', monospace; }
 .filter-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
@@ -195,8 +196,32 @@ input:focus, select:focus, textarea:focus {
 .chart-container { position: relative; height: 280px; }
 .loading { display: flex; align-items: center; justify-content: center; height: 100vh; color: var(--text-muted); font-size: 1rem; }
 
+/* ── UTILITIES ── */
+.btn-sm { font-size: .8rem; padding: 7px 14px; }
+.btn-end { margin-top: auto; }
+.btn-group { display: flex; gap: 10px; }
+.full-col { grid-column: 1/-1; }
+.form-group-end { justify-content: flex-end; }
+.card-locked { text-align: center; padding: 48px; }
+.form-error { color: var(--red); font-size: .82rem; margin-top: 6px; }
+.login-hint { font-size: .85rem; color: var(--text-muted); margin-bottom: 16px; }
+.row-opening { background: var(--primary-light); }
+.row-transitado { background: var(--yellow-light); }
+.tfoot-totals { background: var(--surface2); border-top: 2px solid var(--border); }
+.td-date { white-space: nowrap; color: var(--text-muted); font-size: .82rem; }
+.td-desc { font-weight: 600; }
+.td-bold { font-weight: 700; }
+.td-totals { font-weight: 800; }
+.td-notes { font-size: .82rem; color: var(--text-muted); }
+.td-label-opening { font-weight: 700; color: var(--primary); font-size: .8rem; text-transform: uppercase; letter-spacing: .3px; }
+.td-label-transitado { font-weight: 700; color: var(--yellow); }
+.td-label-transitado-sm { font-weight: 700; color: var(--yellow); font-size: .8rem; }
+.card-locked { text-align: center; padding: 48px; }
+.lock-icon { font-size: 3rem; margin-bottom: 12px; }
+.lock-title { font-size: 1.05rem; font-weight: 700; margin-bottom: 8px; }
+.text-hint { color: var(--text-muted); margin-bottom: 20px; font-size: .9rem; }
+
 @media (max-width: 600px) {
-  nav { padding: 0 12px; }
   main { padding: 16px 12px; }
   .stat-value { font-size: 1.3rem; }
 }
